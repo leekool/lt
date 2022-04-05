@@ -2,7 +2,7 @@ scripts i've created to transcribe court hearings and to learn python
 
 ---
 
-lt.py is a CLI with the folliwing commands:
+lt.py is a CLI with the following commands:
 
 pf - changes the value of 'prefix' in config.json (the beginning of the name of a turn document before the turn number)
 
@@ -18,7 +18,7 @@ save - saves and closes 'last_turn', counts the words, writes 'last_turn', today
 
 ---
 
-lt.ahk is a autohotkey scripts for keybindings that sends speaker names, questioning and answering, et cetera
+lt.ahk is a autohotkey script for keybindings that sends speaker names, questioning and answering, etc
 
 ---
 
