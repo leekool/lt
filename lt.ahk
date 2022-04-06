@@ -1,6 +1,6 @@
 ﻿#Include <JSON>
 
-#ifwinactive, ahk_class OpusApp,  ; IF WORD ACTIVE BEYOND THIS POINT
+#ifwinactive, ahk_class OpusApp,  ; if microsoft word active
 
 ; capitalisation
 :c:THe::The
@@ -15,15 +15,15 @@ return
 
 ::ms::
 sendinput 	Ms^+{space}
-input, key, L1, {LControl}{RControl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}{AppsKey}{F1}{F2}{F3}{F4}{F5}{F6}{F7}{F8}{F9}{F10}{F11}{F12}{Left}{Right}{Up}{Down}{Home}{End}{PgUp}{PgDn}{Del}{Ins}{BS}{CapsLock}{NumLock}{PrintScreen}{Pause}
-stringupper, 	key, key
+input 		key, L1, {LControl}{RControl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}{AppsKey}{F1}{F2}{F3}{F4}{F5}{F6}{F7}{F8}{F9}{F10}{F11}{F12}{Left}{Right}{Up}{Down}{Home}{End}{PgUp}{PgDn}{Del}{Ins}{BS}{CapsLock}{NumLock}{PrintScreen}{Pause}
+stringupper 	key, key
 sendinput 	%key%
 return
 
 ::mrs::
 sendinput 	Mrs^+{space}
-input, 		key, L1, {LControl}{RControl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}{AppsKey}{F1}{F2}{F3}{F4}{F5}{F6}{F7}{F8}{F9}{F10}{F11}{F12}{Left}{Right}{Up}{Down}{Home}{End}{PgUp}{PgDn}{Del}{Ins}{BS}{CapsLock}{NumLock}{PrintScreen}{Pause}
-stringupper, 	key, key
+input 		key, L1, {LControl}{RControl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}{AppsKey}{F1}{F2}{F3}{F4}{F5}{F6}{F7}{F8}{F9}{F10}{F11}{F12}{Left}{Right}{Up}{Down}{Home}{End}{PgUp}{PgDn}{Del}{Ins}{BS}{CapsLock}{NumLock}{PrintScreen}{Pause}
+stringupper 	key, key
 sendinput 	%key%
 return
 
@@ -94,6 +94,9 @@ return
 ; break
 ^b::
 sendinput 	{$}^+{- 2}{left 2}{backspace}{end}  ; bypasses word autocorrect
+input 		key, L1, {LControl}{RControl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}{AppsKey}{F1}{F2}{F3}{F4}{F5}{F6}{F7}{F8}{F9}{F10}{F11}{F12}{Left}{Right}{Up}{Down}{Home}{End}{PgUp}{PgDn}{Del}{Ins}{BS}{CapsLock}{NumLock}{PrintScreen}{Pause}
+stringlower 	key, key
+sendinput 	%key%
 return
 
 ; send SPEAKER 1 - presiding
@@ -130,15 +133,17 @@ return
 
 ; question
 ^q::  
-keywait 	^				; fixes ctrl getting stuck (sometimes doesn't pls fix)
-sendinput 	^+{left}^{insert}		; ctrl+insert is copy in Word
-sleep 		100				; fix : not getting deleted
+keywait 	^			; fixes ctrl getting stuck (sometimes doesn't pls fix)
+sendinput 	^+{left}^{insert}	; ctrl+insert is copy in Word
+sleep 		100			; fix : not getting deleted
+
 {									
 if instr(clipboard, ":")
-	sendinput {backspace}{enter 2}Q.{space 2}
+ sendinput 	{backspace}{enter 2}Q.{space 2}
 else
-	sendinput {right}{enter 2}Q.{space 2}
+ sendinput 	{right}{enter 2}Q.{space 2}
 }
+
 input, 		key, L1, {LControl}{RControl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}{AppsKey}{F1}{F2}{F3}{F4}{F5}{F6}{F7}{F8}{F9}{F10}{F11}{F12}{Left}{Right}{Up}{Down}{Home}{End}{PgUp}{PgDn}{Del}{Ins}{BS}{CapsLock}{NumLock}{PrintScreen}{Pause}  ; capitalises next character
 stringupper, 	key, key
 sendinput 	%key%
