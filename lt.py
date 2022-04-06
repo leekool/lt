@@ -8,6 +8,7 @@ import os
 import sys
 import os.path
 import time
+import re
 import pywinauto
 from openpyxl import load_workbook
 
@@ -27,56 +28,67 @@ def cli():
     pass
 
 
-# change prefix (document name before turn number)
-@cli.command(name='pf', help='Change the value of \'prefix\' (the beginning of a turn name).')
+# change prefix manually (document name before turn number)
+@cli.command(name='prefix', help='Change the value of \'prefix\' (the beginning of a turn name).')
 @click.argument('name')
-def pf(name):
-    previousname = config['prefix']
+def prefix(name):
+    previous = config['prefix']
     config['prefix'] = name
     with open('config.json', 'w') as jsonfile:
         json.dump(config, jsonfile)
-    click.echo(f'\nChanged \'{previousname}\' to \'{name}\'.')
+    click.echo(f'\nChanged \'{previous}\' to \'{name}\'.')
+
+
+# change intials (used in 'daily' when reading running sheet)
+@cli.command(name='initials', help='Change the value of \'initials\' (used in \'daily\' when reading running sheet).')
+@click.argument('name')
+def initials(name):
+    previous = config['initials']
+    config['initials'] = name.upper()
+    with open('config.json', 'w') as jsonfile:
+        json.dump(config, jsonfile)
+    click.echo(f'\nChanged \'{previous}\' to \'{name.upper()}\'.')
 
 
 # change speaker names
 @cli.command(name='s1', help='Change the value of \'speaker1\'.')
 @click.argument('name')
 def s1(name):
-    previousname = config['speaker1']
+    previous = config['speaker1']
     config['speaker1'] = name
     with open('config.json', 'w') as jsonfile:
         json.dump(config, jsonfile)
-    click.echo(f'\nChanged \'{previousname}\' to \'{name}\'.')
+    click.echo(f'\nChanged \'{previous}\' to \'{name}\'.')
 
 
 @cli.command(name='s2', help='Change the value of \'speaker2\'.')
 @click.argument('name')
 def s2(name):
-    previousname = config['speaker2']
+    previous = config['speaker2']
     config['speaker2'] = name
     with open('config.json', 'w') as jsonfile:
         json.dump(config, jsonfile)
-    click.echo(f'\nChanged \'{previousname}\' to \'{name}\'.')
+    click.echo(f'\nChanged \'{previous}\' to \'{name}\'.')
 
 
 @cli.command(name='s3', help='Change the value of \'speaker3\'.')
 @click.argument('name')
 def s3(name):
-    previousname = config['speaker3']
+    previous = config['speaker3']
     config['speaker3'] = name
     with open('config.json', 'w') as jsonfile:
         json.dump(config, jsonfile)
-    click.echo(f'\nChanged \'{previousname}\' to \'{name}\'.')
+    click.echo(f'\nChanged \'{previous}\' to \'{name}\'.')
 
 
 @cli.command(name='s4', help='Change the value of \'speaker4\'.')
 @click.argument('name')
 def s4(name):
-    previousname = config['speaker4']
+    previous = config['speaker4']
     config['speaker4'] = name
     with open('config.json', 'w') as jsonfile:
         json.dump(config, jsonfile)
-    click.echo(f'\nChanged \'{previousname}\' to \'{name}\'.')
+    click.echo(f'\nChanged \'{previous}\' to \'{name}\'.')
 
 
 # create and open new doc
@@ -154,24 +166,54 @@ def doc(turn):
 def daily():
     if 'Legal Transcripts' in rasdial:  # checks if connected to VPN
         list = []
+
         for parent, dirs, files in os.walk(f'X:/{dt.strftime("%Y")}/{dt.strftime("%B")}/{dt.strftime("%d.%m.%y")}/'):
             for dirname in dirs:
-                list.append(dirname)
-        click.echo()  # blank line - is there a better way to do this?
+                list.append(dirname)  # creates list of folders in path
+
+        click.echo()  # blank line - probably a better way to do this
+
         for cnt, name in enumerate(list, 1):
             sys.stdout.write('%d. %s\n\r' % (cnt, name))
         choice = int(input('\nSelect daily folder [1-%s]: ' % cnt)) - 1
-        click.echo(f'\nOpening \'{list[choice]}\'.')
-        config['daily_path'] = f'X:/{dt.strftime("%Y")}/{dt.strftime("%B")}/{dt.strftime("%d.%m.%y")}/{list[choice]}'
-        if os.path.exists(config['daily_path']) == True:
+
+        config['daily_path'] = f'X:/{dt.strftime("%Y")}/{dt.strftime("%B")}/{dt.strftime("%d.%m.%y")}/{list[choice]}/'
+        if os.path.exists(config['daily_path']):
+            with open('config.json', 'w') as jsonfile:
+                json.dump(config, jsonfile)  # writes 'daily_path' to config.json after checking it exists
+        else:
+            sys.exit('\nFolder doesn\'t exist.')
+
+        rs = [s for s in os.listdir(config['daily_path']) if list[choice] in s]
+        if rs == []:  # if no match
+            sys.exit('\nRunning sheet not found.  Enter \'prefix\' manually.')
+        if not rs[0].endswith('.docx'):  # if file found isn't a .docx (will add means to convert .doc to .docx)
+            sys.exit('\nRunning sheet is a .doc file.  Enter \'prefix\' manually.')
+        else:
+            doc = docx.Document(f'{config["daily_path"]}{rs[0]}')
+            table = doc.tables[0]
+            data = []
+
+            for i, row in enumerate(table.rows):
+                text = (cell.text for cell in row.cells)
+                data.append(' '.join(text))
+
+            previous = config['prefix']
+            config['prefix'] = re.search(rf'\b{dt.strftime("%d%m")}\w+', str(data))  # finds word containg today's date
+            config['prefix'] = re.sub(r'[A-Z]', '', config['prefix'].group())  # removes capital letters (turn letter) from word found in previous line
+
             with open('config.json', 'w') as jsonfile:
                 json.dump(config, jsonfile)
-            subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', config['daily_path']])
+                click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.\n')
+
+            turns = [i for i in data if config['initials'] in i]
+            print('\n'.join(turns))  # prints turns corresponding with initials
+
+            subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', config['daily_path']])  # opens folders
             time.sleep(1)  # allows both folders to open in the same window
             subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}'])
-        else:
-            click.echo('\nFolder doesn\'t exist.')
-            quit()
+            click.echo(f'\nOpening \'{list[choice]}\' folders.')
+
     else:
         click.echo('\nNot connected to \'Legal Transcripts VPN 2\'.')
 
@@ -192,7 +234,7 @@ def vpn():
 
 # saves and copies 'last_turn' to 'daily_path' and saves info in excel
 @cli.command(name='save',
-             help='Saves and closes \'last_turn\', moves it to \'daily_path\', and writes info to Excel invoice.')
+             help='Saves and closes \'last_turn\', writes info to Excel invoice, and moves it to \'daily_path\'.')
 def save():
     try:
         app = pywinauto.Application().connect(best_match=config['last_turn'], timeout=2).top_window()
@@ -210,6 +252,8 @@ def save():
 
     word_count = 0
     for para in doc.paragraphs:
+        if para.text.find('--') >= 0:  # accounting for microsoft word counting breaks as words
+            word_count += 1
         word_count = word_count + len(para.text.split())
     click.echo(f'\nCounted {word_count} words.')
 
