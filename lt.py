@@ -201,12 +201,11 @@ def daily():
             shutil.copy(f'{config["daily_path"]}{rs[0]}', f'C:/Users/LEE/Desktop/{rs[0]}')
         while rs[0].endswith('.doc'):  # if file found isn't a .docx (will add means to convert .doc to .docx)
             os.startfile(f'C:/Users/LEE/Desktop/{rs[0]}')
-            app = pywinauto.Application().connect(best_match=rs[0], timeout=2).top_window()
-            app.type_keys('^+s'  # opens save as... dialog
-                          '{TAB}'  # moves to file type box
-                          '{DOWN}'  # opens dropdown
-                          '{HOME}'  # move cursor to top option (.docx)
-                          '{ENTER 2}')  # select and save/close
+            app = pywinauto.Application().connect(best_match=rs[0], timeout=2)
+            app.top_window().type_keys('^+s')  # opens save as... dialog
+            dlg = app.window(class_name='#32770')  # connects to save as... dialog
+            dlg.ComboBox2.select('Word Document ')  # selects .docx in dropdown
+            dlg.Button8.click()  # clicks save
             app = pywinauto.Application().connect(best_match=rs[0], timeout=2).top_window()  # connect to new .docx
             app.close()
             os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .doc running sheet from desktop
