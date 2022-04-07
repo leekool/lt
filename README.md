@@ -18,8 +18,16 @@ vpn - toggles connection to the legal transcripts VPN
 
 save - saves and closes 'last_turn', counts the words, writes 'last_turn', today's date, and the word count into the next empty row of the excel invoice, then moves the turn to 'daily_path'
 
+-
+
+requires: click
+          docx
+          pywinauto
+          openpyxl
 ---
 
 lt.ahk is a autohotkey script with keybindings that send speaker names, questioning and answering, etc
+
+uses [AutoHotkey-JSON](https://github.com/cocobelgica/AutoHotkey-JSON) to read config.json
 
 
