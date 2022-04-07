@@ -2,7 +2,7 @@ scripts i've created to transcribe court hearings and to learn python
 
 
 
-###lt.py
+### lt.py
 
 **lt.py is a CLI with the following commands:**
 
@@ -28,7 +28,7 @@ requires: click
           openpyxl
 ---
 
-###lt.ahk
+### lt.ahk
 
 **lt.ahk is a autohotkey script with keybindings that send speaker names, questioning and answering, etc**
 
