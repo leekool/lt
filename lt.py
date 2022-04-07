@@ -99,69 +99,62 @@ def s4(name):
 # create and open new doc
 @cli.command(name='doc',
              help='Creates and opens a Word document corresponding with turn specified.')
+@click.option('--r',
+              is_flag=True,
+              help='Adds notation for turns that start on a resumption.')
 @click.argument('turn')
-def doc(turn):
+def doc(turn, r):
     config['last_turn'] = config['prefix'] + turn.upper()
     doc = docx.Document('C:/Users/LEE/AppData/Roaming/Microsoft/Templates/AGNSW 2021.docx')
     doc._body.clear_content()
-    if turn == 'a':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [10.00 - 10.15]')
-    elif turn == 'b':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [10.15 - 10.30]')
-    elif turn == 'c':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [10.30 - 10.45]')
-    elif turn == 'd':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [10.45 - 11.00]')
-    elif turn == 'e':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [11.00 - 11.15]')
-    elif turn == 'f':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [11.15 - 11.30]')
-    elif turn == 'g':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [11.30 - 11.45]')
-    elif turn == 'h':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [11.45 - 12.00]')
-    elif turn == 'i':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [12.00 - 12.15]')
-    elif turn == 'j':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [12.15 - 12.30]')
-    elif turn == 'k':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [12.30 - 12.45]')
-    elif turn == 'l':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [12.45 - 1.00]')
-    elif turn == 'l2':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [1.00 - 1.15]')
-    elif turn == 'm':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [2.00 - 2.15]')
-    elif turn == 'n':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [2.15 - 2.30]')
-    elif turn == 'o':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [2.30 - 2.45]')
-    elif turn == 'p':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [2.45 - 3.00]')
-    elif turn == 'q':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [3.00 - 3.15]')
-    elif turn == 'r':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [3.15 - 3.30]')
-    elif turn == 's':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [3:30 - 3.45]')
-    elif turn == 't':
-        doc.add_paragraph(f'START OF TURN {config["last_turn"]} [3.45 - 4.00]')
+
+    options = {'a': '[10.00 - 10.15]',
+               'b': '[10.15 - 10.30]',
+               'c': '[10.30 - 10.45]',
+               'd': '[10.45 - 11.00]',
+               'e': '[11.00 - 11.15]',
+               'f': '[11.15 - 11.30]',
+               'g': '[11.30 - 11.45]',
+               'h': '[11.45 - 12.00]',
+               'i': '[12.00 - 12.15]',
+               'j': '[12.15 - 12.30]',
+               'k': '[12.30 - 12.45]',
+               'l': '[12.45 - 1.00]',
+               'l2': '[1.00 - 1.15]',
+               'm': '[2.00 - 2.15]',
+               'n': '[2.15 - 2.30]',
+               'o': '[2.30 - 2.45]',
+               'p': '[2.45 - 3.00]',
+               'q': '[3.00 - 3.15]',
+               'r': '[3.15 - 3.30]',
+               's': '[3.30 - 3.45]',
+               't': '[3.45 - 4.00]',
+               'u': '[4.00 - 4.15]', }
+
+    if turn in options:
+        doc.add_paragraph(f'START OF TURN {config["last_turn"]} {options[turn]}')
     else:
         sys.exit('\nInvalid turn.')
+
     # save turn's path to config.json so that it can be copied to VPN drive when finished
     config['last_turn_path'] = f'C:/Users/LEE/Desktop/{config["last_turn"]}.docx'
     with open('config.json', 'w') as jsonfile:
         json.dump(config, jsonfile)
     doc.save(config['last_turn_path'])
     click.echo(f'\nCreated Word document: {config["last_turn"]}.docx')
+
     # open document
-    os.system(f'start C:/Users/LEE/Desktop/{config["last_turn"]}.docx')
+    os.startfile(f'C:/Users/LEE/Desktop/{config["last_turn"]}.docx')
     try:
         app = pywinauto.Application().connect(best_match=config['last_turn'], timeout=5).top_window()
     except pywinauto.timings.TimeoutError:
         sys.exit(f'\n{config["last_turn"]}.docx did not open.')
     else:
         app.type_keys('{END}')  # moves cursor to end of document
+
+    # if --r option is used (resumption)
+    if r:
+        app.type_keys('{SPACE}[RESUMPTION]')
 
 
 # open daily folders and write path to config.json
@@ -196,7 +189,7 @@ def daily():
     # attempts to find running sheet in 'daily_path'
     rs = [s for s in os.listdir(config['daily_path']) if 'running' in s or list[choice] in s]
     if rs == []:  # if no match
-        subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', config['daily_path']])
+        os.startfile(config['daily_path'])
         sys.exit('\nRunning sheet not found.  Enter \'prefix\' manually.')
     else:
         shutil.copy(f'{config["daily_path"]}{rs[0]}', f'C:/Users/LEE/Desktop/{rs[0]}')
@@ -239,7 +232,7 @@ def daily():
         json.dump(config, jsonfile)
 
     # open sound folder and delete running sheet
-    subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}'])
+    os.startfile(f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}')
     os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .docx running sheet from desktop
 
 
@@ -270,11 +263,12 @@ def save():
         app.close()
         time.sleep(0.2)
         doc = docx.Document(config['last_turn_path'])
-        doc.add_paragraph()  # adds blank paragraph - probably a better way to do this
+        doc.add_paragraph()  # adds blank line - probably a better way to do this
         doc.add_paragraph(f'END OF TURN {config["last_turn"]}')
         doc.save(config['last_turn_path'])
         click.echo(f'\nSaved and closed: {config["last_turn"]}.docx')
 
+    #  counts words in document
     word_count = 0
     for para in doc.paragraphs:
         if para.text.find('--') >= 0:  # accounts for microsoft word counting breaks as words
@@ -284,6 +278,7 @@ def save():
 
     wb = load_workbook(filename='C:/Users/LEE/Documents/work/Lee Luppi transcription invoice period end 15.04.22.xlsx')
 
+    #  finds next empty row in excel invoice between rows 15-81
     empty_row = 0
     for row in wb.active.iter_rows(min_row=15, max_row=81, max_col=1):
         for cell in row:
@@ -292,17 +287,19 @@ def save():
         if empty_row >= 1:
             break
 
+    #  writes 'last_turn', date, and 'word_count' to their columns
     wb.active.cell(row=empty_row, column=1).value = config['last_turn']
     wb.active.cell(row=empty_row, column=2).value = dt.strftime('%d.%m.%y')
     wb.active.cell(row=empty_row, column=4).value = word_count
     wb.save('C:/Users/LEE/Documents/work/Lee Luppi transcription invoice period end 15.04.22.xlsx')
     click.echo(f'\nCopied \'{config["last_turn"]}\', \'{dt.strftime("%d.%m.%y")}\', and \'{word_count}\' to row {empty_row}.')
 
+    #  moves document to 'daily_path'
     if 'Legal Transcripts' in rasdial:  # checks if connected to VPN
         shutil.move(config['last_turn_path'], config['daily_path'])
         click.echo(f'\n{config["last_turn"]}.docx moved to \'{config["daily_path"]}\'.')
     else:
-        click.echo('\nNot connected to VPN.  Could not move turn to daily folder.')
+        click.echo('\nNot connected to VPN.  Could not move document to daily folder.')
 
 
 if __name__ == '__main__':
