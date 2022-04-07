@@ -204,7 +204,8 @@ def daily():
                           '{ENTER 2}')  # select and save/close
             app = pywinauto.Application().connect(best_match=rs[0], timeout=2).top_window()  # connect to new .docx
             app.close()
-            rs[0] = re.sub('.doc', '.docx', rs[0])  # read re docs and do this properly
+            os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .doc
+            rs[0] = re.sub('.doc', '.docx', rs[0])  # need to read regex docs and do this properly
 
         doc = docx.Document(f'C:/Users/LEE/Desktop/{rs[0]}')
         table = doc.tables[0]
@@ -224,6 +225,7 @@ def daily():
 
         turns = [i for i in data if config['initials'] in i]
         print('\n'.join(turns))  # prints turns corresponding with initials
+        os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .docx running sheet from desktop
 
     else:
         click.echo('\nNot connected to \'Legal Transcripts VPN 2\'.')
