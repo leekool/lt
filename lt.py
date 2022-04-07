@@ -184,35 +184,46 @@ def daily():
         else:
             sys.exit('\nFolder doesn\'t exist.')
 
-        rs = [s for s in os.listdir(config['daily_path']) if list[choice] in s]
+        subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', config['daily_path']])  # opens folder 1
+        time.sleep(1)  # gives time for both folders to open in the same window
+        subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}'])
+        click.echo(f'\nOpening \'{list[choice]}\' folders.')
+
+        rs = [s for s in os.listdir(config['daily_path']) if 'running' in s or list[choice] in s]
         if rs == []:  # if no match
             sys.exit('\nRunning sheet not found.  Enter \'prefix\' manually.')
-        if not rs[0].endswith('.docx'):  # if file found isn't a .docx (will add means to convert .doc to .docx)
-            sys.exit('\nRunning sheet is a .doc file.  Enter \'prefix\' manually.')
         else:
-            doc = docx.Document(f'{config["daily_path"]}{rs[0]}')
-            table = doc.tables[0]
-            data = []
+            shutil.copy(f'{config["daily_path"]}{rs[0]}', f'C:/Users/LEE/Desktop/{rs[0]}')
+        while rs[0].endswith('.doc'):  # if file found isn't a .docx (will add means to convert .doc to .docx)
+            os.startfile(f'C:/Users/LEE/Desktop/{rs[0]}')
+            app = pywinauto.Application().connect(best_match=rs[0], timeout=2).top_window()
+            app.type_keys('^+s'  # opens save as... dialog
+                          '{TAB}'  # moves to file type box
+                          '{DOWN}'  # opens dropdown
+                          '{HOME}'  # move cursor to top option (.docx)
+                          '{ENTER 2}')  # select and save/close
+            app = pywinauto.Application().connect(best_match=rs[0], timeout=2).top_window()  # connect to new .docx
+            app.close()
+            rs[0] = re.sub('.doc', '.docx', rs[0])  # read re docs and do this properly
 
-            for i, row in enumerate(table.rows):
-                text = (cell.text for cell in row.cells)
-                data.append(' '.join(text))
+        doc = docx.Document(f'C:/Users/LEE/Desktop/{rs[0]}')
+        table = doc.tables[0]
+        data = []
 
-            previous = config['prefix']
-            config['prefix'] = re.search(rf'\b{dt.strftime("%d%m")}\w+', str(data))  # finds word containg today's date
-            config['prefix'] = re.sub(r'[A-Z]', '', config['prefix'].group())  # removes capital letters (turn letter) from word found in previous line
+        for i, row in enumerate(table.rows):
+            text = (cell.text for cell in row.cells)
+            data.append(' '.join(text))
 
-            with open('config.json', 'w') as jsonfile:
-                json.dump(config, jsonfile)
-                click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.\n')
+        previous = config['prefix']
+        config['prefix'] = re.search(rf'\b{dt.strftime("%d%m")}\w+', str(data))  # finds word containg today's date
+        config['prefix'] = re.sub(r'[A-Z]', '', config['prefix'].group())  # removes capital letters (turn letter)
 
-            turns = [i for i in data if config['initials'] in i]
-            print('\n'.join(turns))  # prints turns corresponding with initials
+        with open('config.json', 'w') as jsonfile:
+            json.dump(config, jsonfile)
+            click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.\n')
 
-            subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', config['daily_path']])  # opens folders
-            time.sleep(1)  # allows both folders to open in the same window
-            subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}'])
-            click.echo(f'\nOpening \'{list[choice]}\' folders.')
+        turns = [i for i in data if config['initials'] in i]
+        print('\n'.join(turns))  # prints turns corresponding with initials
 
     else:
         click.echo('\nNot connected to \'Legal Transcripts VPN 2\'.')
@@ -252,7 +263,7 @@ def save():
 
     word_count = 0
     for para in doc.paragraphs:
-        if para.text.find('--') >= 0:  # accounting for microsoft word counting breaks as words
+        if para.text.find('--') >= 0:  # accounts for microsoft word counting breaks as words
             word_count += 1
         word_count = word_count + len(para.text.split())
     click.echo(f'\nCounted {word_count} words.')

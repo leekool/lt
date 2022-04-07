@@ -94,9 +94,6 @@ return
 ; break
 ^b::
 sendinput 	{$}^+{- 2}{left 2}{backspace}{end}  ; bypasses word autocorrect
-input 		key, L1, {LControl}{RControl}{LAlt}{RAlt}{LShift}{RShift}{LWin}{RWin}{AppsKey}{F1}{F2}{F3}{F4}{F5}{F6}{F7}{F8}{F9}{F10}{F11}{F12}{Left}{Right}{Up}{Down}{Home}{End}{PgUp}{PgDn}{Del}{Ins}{BS}{CapsLock}{NumLock}{PrintScreen}{Pause}
-stringlower 	key, key
-sendinput 	%key%
 return
 
 ; send SPEAKER 1 - presiding
