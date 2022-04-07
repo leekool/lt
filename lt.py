@@ -22,10 +22,15 @@ with open('config.json', 'r') as jsonfile:
     jsonfile.close()
 
 
-
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
     pass
+
+
+# prints the running sheet last read from the 'daily' command
+@cli.command(name='sheet', help='Prints the last read running sheet.')
+def sheet():
+    click.echo(f'\n{config["sheet"]}')
 
 
 # change prefix manually (document name before turn number)
@@ -204,27 +209,28 @@ def daily():
                           '{ENTER 2}')  # select and save/close
             app = pywinauto.Application().connect(best_match=rs[0], timeout=2).top_window()  # connect to new .docx
             app.close()
-            os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .doc
+            os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .doc running sheet from desktop
             rs[0] = re.sub('.doc', '.docx', rs[0])  # need to read regex docs and do this properly
 
         doc = docx.Document(f'C:/Users/LEE/Desktop/{rs[0]}')
         table = doc.tables[0]
         data = []
 
-        for i, row in enumerate(table.rows):
+        for i, row in enumerate(table.rows):  # turns table rows into strings
             text = (cell.text for cell in row.cells)
             data.append(' '.join(text))
 
         previous = config['prefix']
         config['prefix'] = re.search(rf'\b{dt.strftime("%d%m")}\w+', str(data))  # finds word containg today's date
         config['prefix'] = re.sub(r'[A-Z]', '', config['prefix'].group())  # removes capital letters (turn letter)
-
-        with open('config.json', 'w') as jsonfile:
-            json.dump(config, jsonfile)
-            click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.\n')
+        click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.\n')
 
         turns = [i for i in data if config['initials'] in i]
-        print('\n'.join(turns))  # prints turns corresponding with initials
+        config['sheet'] = '\n'.join(turns)
+        click.echo(config['sheet'])  # prints turns corresponding with initials
+
+        with open('config.json', 'w') as jsonfile:
+            json.dump(config, jsonfile)  # saves 'prefix' and 'sheet' to config.json
         os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .docx running sheet from desktop
 
     else:
