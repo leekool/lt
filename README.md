@@ -22,8 +22,4 @@ save - saves and closes 'last_turn', counts the words, writes 'last_turn', today
 
 lt.ahk is a autohotkey script with keybindings that send speaker names, questioning and answering, etc
 
----
 
-need to create a variable and command for changing the excel invoice name and path
-need to add a means to convert .doc running sheets to .docx
-need to create better means to identify and read running sheets
