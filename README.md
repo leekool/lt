@@ -12,7 +12,7 @@ s1, s2, s3, s4 - change the values of speakers 1, 2, 3, and 4 in config.json acc
 
 doc - requires argument 'turn', creates a new document with the turn template corresponding with 'turn' specified, writes its name and path as 'last_turn' and 'last_turn_path' to config.json.
 
-daily - prints list of folders in the current date's folder and allows you to choose one, opening the folders and changing 'daily_path' in config.json accordingly, attempts to find the running sheet in the folder and pull 'prefix' from it and print turns corresponding with 'initials'
+daily - prints list of folders in the current date's folder and allows you to choose one, opening the folders and changing 'daily_path' in config.json accordingly, attempts to find the running sheet in the folder - converts .doc running sheets to .docx -  and pull 'prefix' from it and print turns corresponding with 'initials'
 
 vpn - toggles connection to the legal transcripts VPN
 
