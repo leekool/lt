@@ -22,10 +22,12 @@ save - saves and closes 'last_turn', counts the words, writes 'last_turn', today
 
 ---
 
-requires: - click
-          - docx
-          - pywinauto
-          - openpyxl
+requires: 
+- click
+- docx
+- pywinauto
+- openpyxl
+- 
 ---
 
 ### lt.ahk
