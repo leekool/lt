@@ -169,78 +169,78 @@ def doc(turn):
              help='Open folders relevant to today\'s date and presiding officer specified. Writes \'daily_path\' to config.json.')
 def daily():
     if 'Legal Transcripts' in rasdial:  # checks if connected to VPN
-
-        # creates list of folders in folders for today's date
-        list = []
-        for parent, dirs, files in os.walk(f'X:/{dt.strftime("%Y")}/{dt.strftime("%B")}/{dt.strftime("%d.%m.%y")}/'):
-            for dirname in dirs:
-                list.append(dirname)  # creates list of folders in path
-
-        click.echo()  # blank line - probably a better way to do this
-
-        # numbers folders in 'list' and allows you to pick a folder by inputting a number
-        for cnt, name in enumerate(list, 1):
-            sys.stdout.write('%d. %s\n\r' % (cnt, name))
-        choice = int(input('\nSelect daily folder [1-%s]: ' % cnt)) - 1
-
-        # checks 'daily_path' exists
-        config['daily_path'] = f'X:/{dt.strftime("%Y")}/{dt.strftime("%B")}/{dt.strftime("%d.%m.%y")}/{list[choice]}/'
-        if os.path.exists(config['daily_path']):
-            pass
-        else:
-            sys.exit('\nFolder doesn\'t exist.')
-
-        # attempts to find running sheet in 'daily_path'
-        rs = [s for s in os.listdir(config['daily_path']) if 'running' in s or list[choice] in s]
-        if rs == []:  # if no match
-            subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', config['daily_path']])
-            sys.exit('\nRunning sheet not found.  Enter \'prefix\' manually.')
-        else:
-            shutil.copy(f'{config["daily_path"]}{rs[0]}', f'C:/Users/LEE/Desktop/{rs[0]}')
-
-        # if running sheet is .doc attempts to convert it to .docx
-        while rs[0].endswith('.doc'):
-            os.startfile(f'C:/Users/LEE/Desktop/{rs[0]}')
-            app = pywinauto.Application().connect(best_match=rs[0], timeout=2)
-            app.top_window().type_keys('^+s')  # opens save as... dialog
-            dlg = app.window(class_name='#32770')  # connects to save as... dialog
-            dlg.ComboBox2.select('Word Document ')  # selects .docx in dropdown
-            dlg.Button8.click()  # clicks save
-            app = pywinauto.Application().connect(best_match=rs[0], timeout=2).top_window()  # connect to new .docx
-            app.close()
-            os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .doc running sheet from desktop
-            rs[0] = re.sub('.doc', '.docx', rs[0])  # need to read regex docs and do this properly
-
-        doc = docx.Document(f'C:/Users/LEE/Desktop/{rs[0]}')
-        table = doc.tables[0]
-        data = []
-
-        # gets text from table rows and puts it into list (data)
-        for i, row in enumerate(table.rows):
-            text = (cell.text for cell in row.cells)
-            data.append(' '.join(text))
-
-        # finds 'prefix' in str(data)
-        previous = config['prefix']
-        config['prefix'] = re.search(rf'\b{dt.strftime("%d%m")}\w+', str(data))  # finds word containg today's date
-        config['prefix'] = re.sub(r'[A-Z]', '', config['prefix'].group())  # removes capital letters (turn letter)
-        click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.\n')
-
-        # finds rows containing 'intials' and prints
-        turns = [i for i in data if config['initials'] in i]
-        config['sheet'] = '\n'.join(turns)
-        click.echo(config['sheet'])  # prints turns corresponding with initials
-
-        # saves 'daily_path', 'prefix', and 'sheet' to config.json
-        with open('config.json', 'w') as jsonfile:
-            json.dump(config, jsonfile)
-
-        # open sound folder and delete running sheet
-        subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}'])
-        os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .docx running sheet from desktop
-
+        pass
     else:
-        click.echo('\nNot connected to \'Legal Transcripts VPN 2\'.')
+        sys.exit('\nNot connected to \'Legal Transcripts VPN 2\'.')
+
+    # creates list of folders in folders for today's date
+    list = []
+    for parent, dirs, files in os.walk(f'X:/{dt.strftime("%Y")}/{dt.strftime("%B")}/{dt.strftime("%d.%m.%y")}/'):
+        for dirname in dirs:
+            list.append(dirname)  # creates list of folders in path
+
+    click.echo()  # blank line - probably a better way to do this
+
+    # numbers folders in 'list' and allows you to pick a folder by inputting a number
+    for cnt, name in enumerate(list, 1):
+        sys.stdout.write('%d. %s\n\r' % (cnt, name))
+    choice = int(input('\nSelect daily folder [1-%s]: ' % cnt)) - 1
+
+    # checks 'daily_path' exists
+    config['daily_path'] = f'X:/{dt.strftime("%Y")}/{dt.strftime("%B")}/{dt.strftime("%d.%m.%y")}/{list[choice]}/'
+    if os.path.exists(config['daily_path']):
+        pass
+    else:
+        sys.exit('\nFolder doesn\'t exist.')
+
+    # attempts to find running sheet in 'daily_path'
+    rs = [s for s in os.listdir(config['daily_path']) if 'running' in s or list[choice] in s]
+    if rs == []:  # if no match
+        subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', config['daily_path']])
+        sys.exit('\nRunning sheet not found.  Enter \'prefix\' manually.')
+    else:
+        shutil.copy(f'{config["daily_path"]}{rs[0]}', f'C:/Users/LEE/Desktop/{rs[0]}')
+
+    # if running sheet is .doc attempts to convert it to .docx
+    while rs[0].endswith('.doc'):
+        os.startfile(f'C:/Users/LEE/Desktop/{rs[0]}')
+        app = pywinauto.Application().connect(best_match=rs[0], timeout=2)
+        app.top_window().type_keys('^+s')  # opens save as... dialog
+        dlg = app.window(class_name='#32770')  # connects to save as... dialog
+        dlg.ComboBox2.select('Word Document ')  # selects .docx in dropdown
+        dlg.Button8.click()  # clicks save
+        app = pywinauto.Application().connect(best_match=rs[0], timeout=2).top_window()  # connect to new .docx
+        app.close()
+        os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .doc running sheet from desktop
+        rs[0] = re.sub('.doc', '.docx', rs[0])  # need to read regex docs and do this properly
+
+    doc = docx.Document(f'C:/Users/LEE/Desktop/{rs[0]}')
+    table = doc.tables[0]
+    data = []
+
+    # gets text from table rows and puts it into list (data)
+    for i, row in enumerate(table.rows):
+        text = (cell.text for cell in row.cells)
+        data.append(' '.join(text))
+
+    # finds 'prefix' in str(data)
+    previous = config['prefix']
+    config['prefix'] = re.search(rf'\b{dt.strftime("%d%m")}\w+', str(data))  # finds word containg today's date
+    config['prefix'] = re.sub(r'[A-Z]', '', config['prefix'].group())  # removes capital letters (turn letter)
+    click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.\n')
+
+    # finds rows containing 'intials' and prints
+    turns = [i for i in data if config['initials'] in i]
+    config['sheet'] = '\n'.join(turns)
+    click.echo(config['sheet'])  # prints turns corresponding with initials
+
+    # saves 'daily_path', 'prefix', and 'sheet' to config.json
+    with open('config.json', 'w') as jsonfile:
+        json.dump(config, jsonfile)
+
+    # open sound folder and delete running sheet
+    subprocess.Popen(['C:/Program Files/GPSoftware/Directory Opus/dopus.exe', f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}'])
+    os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .docx running sheet from desktop
 
 
 # connect/disconnect VPN
