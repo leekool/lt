@@ -121,6 +121,8 @@ def doc(turn, r):
                'k': '[12.30 - 12.45]',
                'l': '[12.45 - 1.00]',
                'l2': '[1.00 - 1.15]',
+               'l3': '[1.15 - 1.30]',
+               'l4': '[1.30 - 1.45]',
                'm': '[2.00 - 2.15]',
                'n': '[2.15 - 2.30]',
                'o': '[2.30 - 2.45]',
@@ -137,14 +139,14 @@ def doc(turn, r):
         sys.exit('\nInvalid turn.')
 
     # save turn's path to config.json so that it can be copied to VPN drive when finished
-    config['last_turn_path'] = f'C:/Users/LEE/Desktop/{config["last_turn"]}.docx'
+    config['last_turn_path'] = f'{config["working_path"]}{config["last_turn"]}.docx'
     with open('config.json', 'w') as jsonfile:
         json.dump(config, jsonfile)
     doc.save(config['last_turn_path'])
     click.echo(f'\nCreated Word document: {config["last_turn"]}.docx')
 
     # open document
-    os.startfile(f'C:/Users/LEE/Desktop/{config["last_turn"]}.docx')
+    os.startfile(f'{config["working_path"]}{config["last_turn"]}.docx')
     try:
         app = pywinauto.Application().connect(best_match=config['last_turn'], timeout=5).top_window()
     except pywinauto.timings.TimeoutError:
@@ -182,7 +184,7 @@ def daily():
     # checks 'daily_path' exists
     config['daily_path'] = f'X:/{dt.strftime("%Y")}/{dt.strftime("%B")}/{dt.strftime("%d.%m.%y")}/{list[choice]}/'
     if os.path.exists(config['daily_path']):
-        pass
+        click.echo(f'\nChanged daily path to \'{config["daily_path"]}\'.')
     else:
         sys.exit('\nFolder doesn\'t exist.')
 
@@ -193,21 +195,21 @@ def daily():
         sys.exit('\nRunning sheet not found.  Enter \'prefix\' manually.')
     else:
         shutil.copy(f'{config["daily_path"]}{rs[0]}', f'C:/Users/LEE/Desktop/{rs[0]}')
-
+        
     # if running sheet is .doc attempts to convert it to .docx
     while rs[0].endswith('.doc'):
-        os.startfile(f'C:/Users/LEE/Desktop/{rs[0]}')
-        app = pywinauto.Application().connect(best_match=rs[0], timeout=2)
+        os.startfile(f'{config["working_path"]}{rs[0]}')
+        app = pywinauto.Application().connect(best_match=rs[0], timeout=5)
         app.top_window().type_keys('^+s')  # opens save as... dialog
         dlg = app.window(class_name='#32770')  # connects to save as... dialog
         dlg.ComboBox2.select('Word Document ')  # selects .docx in dropdown
         dlg.Button8.click()  # clicks save
-        app = pywinauto.Application().connect(best_match=rs[0], timeout=2).top_window()  # connect to new .docx
+        app = pywinauto.Application().connect(best_match=rs[0], timeout=5).top_window()  # connect to new .docx
         app.close()
-        os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .doc running sheet from desktop
+        os.remove(f'{config["working_path"]}{rs[0]}')  # deletes .doc running sheet from desktop
         rs[0] = re.sub('.doc', '.docx', rs[0])  # need to read regex docs and do this properly
 
-    doc = docx.Document(f'C:/Users/LEE/Desktop/{rs[0]}')
+    doc = docx.Document(f'{config["working_path"]}{rs[0]}')
     table = doc.tables[0]
     data = []
 
@@ -220,12 +222,12 @@ def daily():
     previous = config['prefix']
     config['prefix'] = re.search(rf'\b{dt.strftime("%d%m")}\w+', str(data))  # finds word containg today's date
     config['prefix'] = re.sub(r'[A-Z]', '', config['prefix'].group())  # removes capital letters (turn letter)
-    click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.\n')
+    click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.')
 
     # finds rows containing 'intials' and prints
     turns = [i for i in data if config['initials'] in i]
     config['sheet'] = '\n'.join(turns)
-    click.echo(config['sheet'])  # prints turns corresponding with initials
+    click.echo(f'\n{config["sheet"]}')  # prints turns corresponding with initials
 
     # saves 'daily_path', 'prefix', and 'sheet' to config.json
     with open('config.json', 'w') as jsonfile:
@@ -233,7 +235,7 @@ def daily():
 
     # open sound folder and delete running sheet
     os.startfile(f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}')
-    os.remove(f'C:/Users/LEE/Desktop/{rs[0]}')  # deletes .docx running sheet from desktop
+    os.remove(f'{config["working_path"]}{rs[0]}')  # deletes .docx running sheet from desktop
 
 
 # connect/disconnect VPN
