@@ -10,7 +10,10 @@ import os.path
 import time
 import re
 import pywinauto
+import warnings
 from openpyxl import load_workbook
+
+warnings.simplefilter('ignore', category=UserWarning)
 
 dt = date.today()
 rasdial = subprocess.check_output('rasdial').decode('utf-8')  # for checking VPN connection
@@ -194,24 +197,36 @@ def daily():
         os.startfile(config['daily_path'])
         sys.exit('\nRunning sheet not found.  Enter \'prefix\' manually.')
     else:
-        shutil.copy(f'{config["daily_path"]}{rs[0]}', f'C:/Users/LEE/Desktop/{rs[0]}')
-        
+        shutil.copy(f'{config["daily_path"]}{rs[0]}', f'{config["working_path"]}{rs[0]}')
+
     # if running sheet is .doc attempts to convert it to .docx
     while rs[0].endswith('.doc'):
         os.startfile(f'{config["working_path"]}{rs[0]}')
-        app = pywinauto.Application().connect(best_match=rs[0], timeout=5)
+        app = pywinauto.Application().connect(best_match='OpusApp', timeout=5)
         app.top_window().type_keys('^+s')  # opens save as... dialog
         dlg = app.window(class_name='#32770')  # connects to save as... dialog
         dlg.ComboBox2.select('Word Document ')  # selects .docx in dropdown
         dlg.Button8.click()  # clicks save
-        app = pywinauto.Application().connect(best_match=rs[0], timeout=5).top_window()  # connect to new .docx
+        app = pywinauto.Application().connect(best_match='OpusApp', timeout=5).top_window()  # connect to new .docx
         app.close()
         os.remove(f'{config["working_path"]}{rs[0]}')  # deletes .doc running sheet from desktop
         rs[0] = re.sub('.doc', '.docx', rs[0])  # need to read regex docs and do this properly
 
     doc = docx.Document(f'{config["working_path"]}{rs[0]}')
     table = doc.tables[0]
-    data = []
+    data = []  # text found in the table in running sheet doc
+    toptext = []  # text at top of running sheet doc
+
+    # ~~~ HERE ON IS ABSOLUTELY CONVOLUTED DUE TO RUNNING SHEETS BEING A MESS ~~~
+
+    # gets and formats texts at top of running sheet (toptext)
+    for p in doc.paragraphs:
+        if len(p.text) == 0 or 'DAILY' in p.text:
+            pass  # ignores empty lines and header
+        else:
+            toptext.append(''.join(p.text))
+
+    toptext[0] = re.sub('DATE.*', '', toptext[0])  # removes 'DATE:' - .* means to end of string
 
     # gets text from table rows and puts it into list (data)
     for i, row in enumerate(table.rows):
@@ -219,23 +234,40 @@ def daily():
         data.append(' '.join(text))
 
     # finds 'prefix' in str(data)
-    previous = config['prefix']
     config['prefix'] = re.search(rf'\b{dt.strftime("%d%m")}\w+', str(data))  # finds word containg today's date
-    config['prefix'] = re.sub(r'[A-Z]', '', config['prefix'].group())  # removes capital letters (turn letter)
-    click.echo(f'\nChanged prefix from \'{previous}\' to \'{config["prefix"]}\'.')
 
-    # finds rows containing 'intials' and prints
+    if config['prefix'] == None:  # searches in 'toptext' if no prefix found in 'data'
+        config['prefix'] = re.search(rf'\b{dt.strftime("%d%m")}\w+', str(toptext))  # possibly way to do this in one re.search?
+
+    config['prefix'] = re.sub(r'[A-Z]', '', config['prefix'].group())  # removes capital letters (turn letter)
+
+    # finds rows containing 'intials'
     turns = [i for i in data if config['initials'] in i]
-    config['sheet'] = '\n'.join(turns)
-    click.echo(f'\n{config["sheet"]}')  # prints turns corresponding with initials
+    foundturns = '\n'.join(turns)
+    foundturns = re.sub(rf'{prefix}', '', foundturns)  # removes prefix from 'foundturns' if found
+
+    config['sheet'] = f'{toptext[2]}\n{toptext[0]}\n{toptext[1]}\nPREFIX: {config["prefix"]}\n\n{foundturns}'  # formats sheet
+
+    court = re.search(rf'(?<=\bCOURT:\s)(\w.*)', config['sheet'])  # finds the courtroom (finds word after 'COURT:')
+
+    # ~~~ END BUTCHERING RUNNING SHEET ~~~
 
     # saves 'daily_path', 'prefix', and 'sheet' to config.json
     with open('config.json', 'w') as jsonfile:
         json.dump(config, jsonfile)
 
-    # open sound folder and delete running sheet
-    os.startfile(f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}')
+    # open running folder and delete running sheet
+    os.startfile(config['daily_path'])
     os.remove(f'{config["working_path"]}{rs[0]}')  # deletes .docx running sheet from desktop
+
+    # checks if sound folder exists and attempt to open sound folder
+    if os.path.exists(f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}/{court.group()}'):
+        click.echo(f'\nFound sound folder: \'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}/{court.group()}\'.\n')
+        os.startfile(f'S:/AGNSW DAILIES/{dt.strftime("%Y%m%d")}/{court.group()}')
+    else:
+        click.echo('\nCould not find court/sound folder.\n')
+
+    click.echo(config['sheet'])
 
 
 # connect/disconnect VPN
@@ -278,7 +310,7 @@ def save():
         word_count = word_count + len(para.text.split())
     click.echo(f'\nCounted {word_count} words.')
 
-    wb = load_workbook(filename='C:/Users/LEE/Documents/work/Lee Luppi transcription invoice period end 15.04.22.xlsx')
+    wb = load_workbook(filename='C:/Users/LEE/Documents/work/Lee Luppi transcription invoice period end 15.05.22.xlsx')
 
     #  finds next empty row in excel invoice between rows 15-81
     empty_row = 0
@@ -293,7 +325,7 @@ def save():
     wb.active.cell(row=empty_row, column=1).value = config['last_turn']
     wb.active.cell(row=empty_row, column=2).value = dt.strftime('%d.%m.%y')
     wb.active.cell(row=empty_row, column=4).value = word_count
-    wb.save('C:/Users/LEE/Documents/work/Lee Luppi transcription invoice period end 15.04.22.xlsx')
+    wb.save('C:/Users/LEE/Documents/work/Lee Luppi transcription invoice period end 15.05.22.xlsx')
     click.echo(f'\nCopied \'{config["last_turn"]}\', \'{dt.strftime("%d.%m.%y")}\', and \'{word_count}\' to row {empty_row}.')
 
     #  moves document to 'daily_path'
